@@ -1,0 +1,13 @@
+[workspace]
+members = ["proto","server", "worker"]
+resolver = "3"
+
+[workspace.dependencies]
+argmin = { version = "0.11.0", features = ["rayon"] }
+argmin-math = { version = "0.5.1", features = ["nalgebra_latest"] }
+argmin_testfunctions = "0.3.0"
+rand = "0.10.0"
+rand_xoshiro = "0.8.0"
+argmin-observer-slog = "0.2.0"
+tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tokio-stream = "0.1.18"
