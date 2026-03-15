@@ -43,3 +43,12 @@ pub fn conflict_error(message: &str) -> (StatusCode, Json<ErrorResponse>) {
         }),
     )
 }
+
+pub fn not_found_error(message: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse {
+            message: message.to_string(),
+        }),
+    )
+}

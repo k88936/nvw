@@ -82,6 +82,31 @@ pub struct SubmitTaskResultRequest {
     pub finished_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CreateTaskRequest {
+    pub payload: TaskPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UpdateTaskRequest {
+    pub status: Option<TaskStatus>,
+    pub payload: Option<TaskPayload>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TaskDto {
+    pub id: Uuid,
+    pub status: TaskStatus,
+    pub payload: TaskPayload,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ListTasksResponse {
+    pub tasks: Vec<TaskDto>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Version {
     pub major: u32,

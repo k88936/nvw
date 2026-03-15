@@ -1,8 +1,8 @@
 use chrono::{Duration as ChronoDuration, Utc};
 use diesel::{Connection, SqliteConnection};
 use proto::{
-    ClaimTaskRequest, ClaimTaskResponse, ResultOutcome, SubmitTaskResultRequest, TaskLease,
-    TaskPayload,
+    ClaimTaskRequest, ClaimTaskResponse, CreateTaskRequest, ResultOutcome, SubmitTaskResultRequest,
+    TaskDto, TaskLease, TaskPayload, UpdateTaskRequest,
 };
 use tracing::{info, warn};
 use uuid::Uuid;
@@ -11,12 +11,50 @@ use crate::repository::lease_repo::{
     deactivate_lease, insert_lease, latest_attempt_for_task, lease_by_ids,
 };
 use crate::repository::result_repo::{NewTaskResult, insert_task_result};
-use crate::repository::task_repo::{fetch_first_pending_task, mark_task_running, mark_task_status};
+use crate::repository::task_repo::{
+    create_task as repo_create_task, delete_task as repo_delete_task, fetch_first_pending_task,
+    get_task as repo_get_task, list_tasks as repo_list_tasks, mark_task_running, mark_task_status,
+    update_task as repo_update_task,
+};
 use crate::app::AppState;
 
 pub enum SubmitResult {
     Accepted,
     Conflict,
+}
+
+pub fn create_task(state: &AppState, req: &CreateTaskRequest) -> anyhow::Result<TaskDto> {
+    let mut conn = state.db_pool.get()?;
+    let task = repo_create_task(&mut conn, &req.payload)?;
+    Ok(task)
+}
+
+pub fn list_tasks(state: &AppState) -> anyhow::Result<Vec<TaskDto>> {
+    let mut conn = state.db_pool.get()?;
+    let tasks = repo_list_tasks(&mut conn)?;
+    Ok(tasks)
+}
+
+pub fn get_task(state: &AppState, task_id: Uuid) -> anyhow::Result<Option<TaskDto>> {
+    let mut conn = state.db_pool.get()?;
+    let task = repo_get_task(&mut conn, &task_id)?;
+    Ok(task)
+}
+
+pub fn update_task(
+    state: &AppState,
+    task_id: Uuid,
+    req: &UpdateTaskRequest,
+) -> anyhow::Result<Option<TaskDto>> {
+    let mut conn = state.db_pool.get()?;
+    let task = repo_update_task(&mut conn, &task_id, req.status, req.payload.clone())?;
+    Ok(task)
+}
+
+pub fn delete_task(state: &AppState, task_id: Uuid) -> anyhow::Result<bool> {
+    let mut conn = state.db_pool.get()?;
+    let deleted = repo_delete_task(&mut conn, &task_id)?;
+    Ok(deleted)
 }
 
 pub fn claim_task(state: &AppState, req: &ClaimTaskRequest) -> anyhow::Result<ClaimTaskResponse> {

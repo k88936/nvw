@@ -61,6 +61,16 @@ async fn main() -> Result<()> {
             "/v1/tasks/result",
             post(task_controller::submit_task_result),
         )
+        .route(
+            "/v1/tasks",
+            post(task_controller::create_task).get(task_controller::list_tasks),
+        )
+        .route(
+            "/v1/tasks/:id",
+            get(task_controller::get_task)
+                .put(task_controller::update_task)
+                .delete(task_controller::delete_task),
+        )
         .route("/version", get(version_controller::handle_version))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .with_state(state);
