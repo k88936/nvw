@@ -10,7 +10,9 @@ use uuid::Uuid;
 use crate::repository::lease_repo::{
     deactivate_lease, insert_lease, latest_attempt_for_task, lease_by_ids,
 };
-use crate::repository::result_repo::{NewTaskResult, insert_task_result};
+use crate::repository::result_repo::{
+    NewTaskResult, get_task_result as repo_get_task_result, insert_task_result,
+};
 use crate::repository::task_repo::{
     create_task as repo_create_task, delete_task as repo_delete_task, fetch_first_pending_task,
     get_task as repo_get_task, list_tasks as repo_list_tasks, mark_task_running, mark_task_status,
@@ -39,6 +41,15 @@ pub fn get_task(state: &AppState, task_id: Uuid) -> anyhow::Result<Option<TaskDt
     let mut conn = state.db_pool.get()?;
     let task = repo_get_task(&mut conn, &task_id)?;
     Ok(task)
+}
+
+pub fn get_task_result(
+    state: &AppState,
+    task_id: Uuid,
+) -> anyhow::Result<Option<proto::TaskResultDto>> {
+    let mut conn = state.db_pool.get()?;
+    let result = repo_get_task_result(&mut conn, &task_id.to_string())?;
+    Ok(result)
 }
 
 pub fn update_task(

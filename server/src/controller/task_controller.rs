@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use proto::{
     ClaimTaskRequest, ClaimTaskResponse, CreateTaskRequest, ListTasksResponse,
-    SubmitTaskResultRequest, TaskDto, UpdateTaskRequest,
+    SubmitTaskResultRequest, TaskDto, UpdateTaskRequest, TaskResultDto,
 };
 use crate::app::{conflict_error, internal_error, not_found_error, ApiResult, AppState};
 use crate::service;
@@ -31,6 +31,17 @@ pub async fn get_task(
     match task {
         Some(t) => Ok(Json(t)),
         None => Err(not_found_error("task not found")),
+    }
+}
+
+pub async fn get_task_result(
+    State(state): State<Arc<AppState>>,
+    Path(task_id): Path<Uuid>,
+) -> ApiResult<Json<TaskResultDto>> {
+    let result = service::get_task_result(&state, task_id).map_err(internal_error)?;
+    match result {
+        Some(r) => Ok(Json(r)),
+        None => Err(not_found_error("task result not found")),
     }
 }
 
