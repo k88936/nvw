@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use proto::{CreateTaskRequest, ListTasksResponse, TaskDto, TaskPayload, UpdateTaskRequest, TaskStatus};
+use proto::{CreateTaskRequest, ListTasksResponse, TaskDto, TaskPayload, UpdateTaskRequest, TaskStatus, TaskResultDto};
 use reqwest::{Client, Url};
 use uuid::Uuid;
 
@@ -68,6 +68,20 @@ impl ApiClient {
         if !resp.status().is_success() {
             let error_text = resp.text().await?;
             anyhow::bail!("Failed to get task: {}", error_text);
+        }
+
+        resp.json().await.context("Failed to parse response")
+    }
+
+    pub async fn get_task_result(&self, task_id: Uuid) -> Result<TaskResultDto> {
+        let path = format!("v1/tasks/{}/result", task_id);
+        let resp = self.request_builder(reqwest::Method::GET, &path).await?
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let error_text = resp.text().await?;
+            anyhow::bail!("Failed to get task result: {}", error_text);
         }
 
         resp.json().await.context("Failed to parse response")

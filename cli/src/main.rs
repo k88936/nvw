@@ -30,6 +30,9 @@ enum Commands {
     /// Get a specific task
     Get { id: Uuid },
 
+    /// Get result for a specific task
+    Result { id: Uuid },
+
     /// Update a task
     Update {
         id: Uuid,
@@ -69,6 +72,10 @@ async fn main() -> Result<()> {
         Commands::Get { id } => {
             let task = client.get_task(id).await?;
             println!("{}", serde_json::to_string_pretty(&task)?);
+        }
+        Commands::Result { id } => {
+            let result = client.get_task_result(id).await?;
+            println!("{}", serde_json::to_string_pretty(&result)?);
         }
         Commands::Update { id, status, payload } => {
             let status_enum = if let Some(s) = status {
