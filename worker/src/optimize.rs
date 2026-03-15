@@ -1,19 +1,11 @@
-use argmin::core::{CostFunction, Error, Executor};
+use argmin::core::CostFunction;
+use argmin::core::Error;
+use argmin::core::Executor;
 use argmin::solver::particleswarm::ParticleSwarm;
 use nalgebra::DVector;
 use proto::{FailedOptimization, SuccessfulOptimization, TaskPayload, TaskRunMetrics};
 use tracing::{info, warn};
-
-struct Sphere;
-
-impl CostFunction for Sphere {
-    type Param = DVector<f64>;
-    type Output = f64;
-
-    fn cost(&self, param: &Self::Param) -> Result<Self::Output, Error> {
-        Ok(param.iter().map(|v| v * v).sum())
-    }
-}
+use crate::problem::sense::SenseProblem;
 
 pub enum SolverResult {
     Success(SuccessfulOptimization, TaskRunMetrics),
@@ -45,9 +37,9 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
     let lower = DVector::from_vec(payload.param_bounds_min.clone());
     let upper = DVector::from_vec(payload.param_bounds_max.clone());
     info!(max_iters = payload.max_iters, "starting optimization");
-    let solver = ParticleSwarm::new((lower, upper), 64);
+    let solver = ParticleSwarm::new((lower, upper), payload.swarm_scale);
 
-    match Executor::new(Sphere, solver)
+    match Executor::new(SenseProblem::default(), solver)
         .configure(|state| state.max_iters(payload.max_iters as u64))
         .run()
     {

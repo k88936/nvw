@@ -18,12 +18,12 @@ def process_tle(name, line1, line2, ts):
         # Construct dictionary
         return {
             "name": name,
-            "px":pos[0],
-            "py":pos[1],
-            "pz":pos[2],
-            "vx":vel[0],
-            "vy":vel[1],
-            "vz":vel[2],
+            "px": pos[0],
+            "py": pos[1],
+            "pz": pos[2],
+            "vx": vel[0],
+            "vy": vel[1],
+            "vz": vel[2],
         }
     except Exception as e:
         print(f"Error processing {name}: {e}")
@@ -71,7 +71,8 @@ def main():
     with open(output_file, "w") as f:
         f.write(f"pub static CLIENT_SATELLITES: [Satellite; {len(data)}] = [\n")
         for sat in data:
-            f.write(f'    Satellite {{ name: "{sat["name"]}", px: {sat["px"]}, py: {sat["py"]}, pz: {sat["pz"]}, vx: {sat["vx"]}, vy: {sat["vy"]}, vz: {sat["vz"]} }},\n')
+            f.write(
+                f'    Satellite {{ name: "{sat["name"]}", r_km: [{sat["px"]},{sat["py"]},{sat["pz"]}], v_km_s: [{sat["vx"]},{sat["vy"]},{sat["vz"]}] }},\n')
         f.write("];\n")
 
     print(f"Saved to {output_file}")

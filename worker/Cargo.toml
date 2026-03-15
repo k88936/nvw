@@ -21,3 +21,4 @@ approx.workspace = true
 nalgebra.workspace = true
 anyhow.workspace = true
 poliastrs.workspace = true
+itertools.workspace = true
