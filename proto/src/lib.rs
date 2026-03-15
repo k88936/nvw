@@ -107,6 +107,18 @@ pub struct ListTasksResponse {
     pub tasks: Vec<TaskDto>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TaskResultDto {
+    pub task_id: Uuid,
+    pub lease_id: Uuid,
+    pub worker_id: Uuid,
+    pub outcome: ResultOutcome,
+    pub metrics: TaskRunMetrics,
+    pub success: Option<SuccessfulOptimization>,
+    pub failure: Option<FailedOptimization>,
+    pub finished_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Version {
     pub major: u32,
