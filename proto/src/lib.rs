@@ -18,16 +18,12 @@ pub enum ResultOutcome {
     Failed,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ParamBound {
-    pub min: f32,
-    pub max: f32,
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TaskPayload {
-    pub param_count: usize,
-    pub param_bounds: Vec<ParamBound>,
+    pub swarm_scale: usize,
+    pub param_bounds_min: Vec<f64>,
+    pub param_bounds_max: Vec<f64>,
     pub max_iters: usize,
 }
 

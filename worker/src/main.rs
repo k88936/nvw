@@ -1,6 +1,7 @@
 mod optimize;
 pub mod problem;
 pub mod utils;
+pub mod data;
 
 use std::{env, time::Duration};
 

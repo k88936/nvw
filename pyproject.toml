@@ -1,0 +1,9 @@
+[project]
+name = "nvw"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "astropy==7.2.0",
+    "skyfield==1.54",
+]

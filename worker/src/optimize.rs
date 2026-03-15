@@ -26,10 +26,12 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
         best_iters: 0,
         termination: "solver_failed".to_string(),
     };
-    if payload.param_count == 0 || payload.param_bounds.len() != payload.param_count {
+    if payload.swarm_scale == 0 || payload.param_bounds_min.len() != payload.param_bounds_max.len()
+    {
         warn!(
-            param_count = payload.param_count,
-            bounds_len = payload.param_bounds.len(),
+            swarm_scale = payload.swarm_scale,
+            min_bounds_len = payload.param_bounds_min.len(),
+            max_bounds_len = payload.param_bounds_max.len(),
             "payload validation failed"
         );
         return SolverResult::Failure(
@@ -40,13 +42,9 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
         );
     }
 
-    let lower = DVector::from_vec(payload.param_bounds.iter().map(|b| b.min as f64).collect());
-    let upper = DVector::from_vec(payload.param_bounds.iter().map(|b| b.max as f64).collect());
-    info!(
-        dims = payload.param_count,
-        max_iters = payload.max_iters,
-        "starting optimization"
-    );
+    let lower = DVector::from_vec(payload.param_bounds_min.clone());
+    let upper = DVector::from_vec(payload.param_bounds_max.clone());
+    info!(max_iters = payload.max_iters, "starting optimization");
     let solver = ParticleSwarm::new((lower, upper), 64);
 
     match Executor::new(Sphere, solver)
@@ -87,5 +85,23 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
             },
             metrics_on_fail,
         ),
+    }
+}
+
+#[test]
+fn optimize_test() {
+    let param = TaskPayload {
+        swarm_scale: 100,
+        param_bounds_min: vec![-100f64, -100f64],
+        param_bounds_max: vec![100f64, 100f64],
+        max_iters: 100,
+    };
+    match run_optimization(&param) {
+        SolverResult::Success(opt, metrics) => {
+            println!("optimization successful: {:?} {:?}", opt, metrics);
+        }
+        SolverResult::Failure(opt, metrics) => {
+            println!("optimization failed: {:?} {:?}", opt, metrics);
+        }
     }
 }
