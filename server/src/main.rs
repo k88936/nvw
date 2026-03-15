@@ -13,8 +13,14 @@ use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use tracing::info;
 
 use app::{AppState, DbPool};
-use axum::Router;
-use axum::routing::{get, post};
+use axum::{
+    Router,
+    extract::{Request, State},
+    http::{HeaderMap, StatusCode},
+    middleware::{self, Next},
+    response::Response,
+    routing::{get, post},
+};
 use controller::*;
 use cron::*;
 
@@ -30,6 +36,7 @@ async fn main() -> Result<()> {
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(30);
+    let bearer_token = env::var("BEARER_TOKEN").unwrap_or("k88936".into());
 
     let manager = ConnectionManager::<SqliteConnection>::new(db_url);
     let db_pool = Pool::builder().max_size(16).build(manager)?;
@@ -43,6 +50,7 @@ async fn main() -> Result<()> {
     let state = Arc::new(AppState {
         db_pool,
         lease_timeout_secs,
+        bearer_token,
     });
 
     timeout_cron::spawn_timeout_job(state.clone());
@@ -54,6 +62,7 @@ async fn main() -> Result<()> {
             post(task_controller::submit_task_result),
         )
         .route("/version", get(version_controller::handle_version))
+        .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .with_state(state);
 
     let addr: SocketAddr = bind_addr.parse()?;
@@ -61,6 +70,24 @@ async fn main() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+async fn auth(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let auth_header = headers
+        .get("Authorization")
+        .and_then(|value| value.to_str().ok())
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    if auth_header != format!("Bearer {}", state.bearer_token) {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    Ok(next.run(req).await)
 }
 
 fn run_migrations(pool: &DbPool) -> Result<()> {

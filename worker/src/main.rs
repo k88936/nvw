@@ -9,7 +9,7 @@ use chrono::Utc;
 use optimize::{SolverResult, run_optimization};
 use tracing::{error, info, warn};
 use uuid::Uuid;
-use proto::{ClaimTaskRequest, ClaimTaskResponse, SubmitTaskResultRequest};
+use proto::{ClaimTaskRequest, ClaimTaskResponse, SubmitTaskResultRequest, Version};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -21,18 +21,41 @@ async fn main() -> Result<()> {
         .ok()
         .and_then(|v| Uuid::parse_str(&v).ok())
         .unwrap_or_else(Uuid::new_v4);
-    let poll_interval_ms: u64 = env::var("POLL_INTERVAL_MS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(4096);
+    let poll_interval_ms: u64 = 4096;
+    let bearer_token = env::var("BEARER_TOKEN").unwrap_or("k88936".into());
 
-    let client = reqwest::Client::new();
+    let mut headers = reqwest::header::HeaderMap::new();
+    let mut auth_value = reqwest::header::HeaderValue::from_str(&format!("Bearer {}", bearer_token))?;
+    auth_value.set_sensitive(true);
+    headers.insert(reqwest::header::AUTHORIZATION, auth_value);
+
+    let client = reqwest::Client::builder()
+        .default_headers(headers)
+        .build()?;
     info!(
         worker_id = %worker_id,
         server_url = %server_url,
         poll_interval_ms,
         "worker started"
     );
+    // ensure version compatibile
+    loop {
+        let version_resp = client
+            .get(&format!("{}/api/version", server_url))
+            .send()
+            .await?;
+        if !version_resp.status().is_success() {
+            error!("version check failed: {}", version_resp.status());
+            tokio::time::sleep(Duration::from_secs(poll_interval_ms)).await;
+            continue;
+        }
+        let version_resp: Version = version_resp.json().await?;
+        let worker_version = Version::default();
+        if version_resp.major != worker_version.major || version_resp.minor != worker_version.minor {
+            panic!("worker version outdated. current: {:?} ,server: {:?}", worker_version,version_resp)
+        }
+        break;
+    }
 
     loop {
         info!(worker_id = %worker_id, "polling for task");

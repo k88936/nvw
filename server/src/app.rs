@@ -14,6 +14,7 @@ pub type DbPool = Pool<ConnectionManager<SqliteConnection>>;
 pub struct AppState {
     pub db_pool: DbPool,
     pub lease_timeout_secs: i64,
+    pub bearer_token: String,
 }
 
 pub type SharedState = Arc<AppState>;
