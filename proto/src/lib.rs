@@ -1,6 +1,6 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -80,4 +80,20 @@ pub struct SubmitTaskResultRequest {
     pub success: Option<SuccessfulOptimization>,
     pub failure: Option<FailedOptimization>,
     pub finished_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Version {
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+}
+impl Default for Version {
+    fn default() -> Self {
+        Self{
+            major: 0,
+            minor: 0,
+            patch: 0,
+        }
+    }
 }

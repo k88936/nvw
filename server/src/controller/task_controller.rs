@@ -1,20 +1,12 @@
 use std::sync::Arc;
-use axum::{Json, Router};
-use axum::routing::post;
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use proto::{ClaimTaskRequest, ClaimTaskResponse, SubmitTaskResultRequest};
-use crate::app::{conflict_error, internal_error, ApiResult, AppState, SharedState};
+use crate::app::{conflict_error, internal_error, ApiResult, AppState};
 use crate::service;
 
-pub fn router(state: SharedState) -> Router {
-    Router::new()
-        .route("/v1/tasks/claim", post(claim_task))
-        .route("/v1/tasks/result", post(submit_task_result))
-        .with_state(state)
-}
-
-async fn claim_task(
+pub async fn claim_task(
     State(state): State<Arc<AppState>>,
     Json(req): Json<ClaimTaskRequest>,
 ) -> ApiResult<Json<ClaimTaskResponse>> {
@@ -22,7 +14,7 @@ async fn claim_task(
     Ok(Json(response))
 }
 
-async fn submit_task_result(
+pub async fn submit_task_result(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SubmitTaskResultRequest>,
 ) -> ApiResult<StatusCode> {

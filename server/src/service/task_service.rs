@@ -12,7 +12,7 @@ use crate::repository::lease_repo::{
 };
 use crate::repository::result_repo::{NewTaskResult, insert_task_result};
 use crate::repository::task_repo::{fetch_first_pending_task, mark_task_running, mark_task_status};
-use crate::{app::AppState, repository};
+use crate::app::AppState;
 
 pub enum SubmitResult {
     Accepted,

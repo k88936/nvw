@@ -8,13 +8,15 @@ pub mod service;
 use std::{env, net::SocketAddr, sync::Arc};
 
 use anyhow::Result;
-use diesel::{r2d2::ConnectionManager, r2d2::Pool, SqliteConnection};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel::{SqliteConnection, r2d2::ConnectionManager, r2d2::Pool};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use tracing::info;
 
 use app::{AppState, DbPool};
-use controller::task_controller;
-use cron::timeout_cron;
+use axum::Router;
+use axum::routing::{get, post};
+use controller::*;
+use cron::*;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -44,7 +46,15 @@ async fn main() -> Result<()> {
     });
 
     timeout_cron::spawn_timeout_job(state.clone());
-    let app = task_controller::router(state);
+    retry_cron::spawn_retry_cron(state.clone());
+    let app = Router::new()
+        .route("/v1/tasks/claim", post(task_controller::claim_task))
+        .route(
+            "/v1/tasks/result",
+            post(task_controller::submit_task_result),
+        )
+        .route("/version", get(version_controller::handle_version))
+        .with_state(state);
 
     let addr: SocketAddr = bind_addr.parse()?;
     info!("server listening on {}", addr);
