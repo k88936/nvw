@@ -51,25 +51,20 @@ impl CostFunction for SenseProblem {
         let coverage_score: i32 = self
             .client_satellites_ephem
             .iter()
-            .map(|ephem| {
-                let one_client_score: i32 = ephem
+            .flat_map(|ephem| {
+                ephem
                     .rv(None)
                     .0
-                    .iter()
+                    .into_iter()
                     .enumerate()
                     .map(|(i, pos)| {
                         match senser_ephem.iter().any(|sense_ephem| {
-                            let d1 = sense_ephem.rv(None).0[i];
-                            let d2 = d1 - pos;
-                            let d3 = d2.magnitude_squared();
-                            d3 < sense_radius_km_square
+                            (sense_ephem.rv(None).0[i] - pos).magnitude_squared() < sense_radius_km_square
                         }) {
                             true => 0,
                             false => 1,
                         }
                     })
-                    .sum();
-                one_client_score
             })
             .sum();
 
