@@ -1,3 +1,4 @@
+use std::iter;
 use crate::problem::sense::SenseProblem;
 use argmin_observer_slog::SlogLogger;
 use argmin::core::Executor;
@@ -83,12 +84,16 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
 
 #[test]
 fn optimize_test() {
+
+    // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
+    let single_bounds_min= vec![20000f64, 0f64, 0f64, 0f64, 0f64, 0f64];
+    let single_bounds_max = vec![40000f64, 0.1f64, 180f64, 360f64, 360f64, 360f64];
+    let satellite_num=8;
     let param = TaskPayload {
-        swarm_scale: 100,
-        // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
-        param_bounds_min: vec![30000f64, 0f64, 0f64, 0f64, 0f64, 0f64],
-        param_bounds_max: vec![50000f64, 0.2f64, 180f64, 360f64, 360f64, 360f64],
-        max_iters: 100,
+        swarm_scale: 300,
+        param_bounds_min: iter::repeat_n(single_bounds_min,satellite_num).flatten().collect(),
+        param_bounds_max: iter::repeat_n(single_bounds_max,satellite_num).flatten().collect(),
+        max_iters: 1000,
     };
     match run_optimization(&param) {
         SolverResult::Success(opt, metrics) => {
