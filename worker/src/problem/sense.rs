@@ -9,7 +9,6 @@ use poliastrs::core::elements::ClassicalElements;
 use poliastrs::ephem::Ephem;
 use poliastrs::frames::Plane;
 use poliastrs::twobody::orbit::Orbit;
-use std::ops::Sub;
 
 pub struct SenseProblem {
     client_satellites_ephem: Vec<Ephem>,
@@ -19,7 +18,7 @@ impl Default for SenseProblem {
     fn default() -> Self {
         Self {
             client_satellites_ephem: init_client_satellites_ephem(),
-            sense_radius_km: 234.0,
+            sense_radius_km: 11234.0,
         }
     }
 }
@@ -49,18 +48,27 @@ impl CostFunction for SenseProblem {
 
         let sense_radius_km_square = self.sense_radius_km * self.sense_radius_km;
 
-        let coverage_score: i32= self.client_satellites_ephem
+        let coverage_score: i32 = self
+            .client_satellites_ephem
             .iter()
             .map(|ephem| {
-               let one_client_score: i32 =ephem.rv(None).0.iter().enumerate().map(|(i, pos)| {
-                    match senser_ephem.iter().any(|sense_ephem| {
-                        sense_ephem.rv(None).0[i].sub(pos).magnitude_squared()
-                            < sense_radius_km_square
-                    }) {
-                        true => 0,
-                        false => 1,
-                    }
-                }).sum();
+                let one_client_score: i32 = ephem
+                    .rv(None)
+                    .0
+                    .iter()
+                    .enumerate()
+                    .map(|(i, pos)| {
+                        match senser_ephem.iter().any(|sense_ephem| {
+                            let d1 = sense_ephem.rv(None).0[i];
+                            let d2 = d1 - pos;
+                            let d3 = d2.magnitude_squared();
+                            d3 < sense_radius_km_square
+                        }) {
+                            true => 0,
+                            false => 1,
+                        }
+                    })
+                    .sum();
                 one_client_score
             })
             .sum();

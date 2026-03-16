@@ -1,11 +1,11 @@
-use argmin::core::CostFunction;
-use argmin::core::Error;
+use crate::problem::sense::SenseProblem;
+use argmin_observer_slog::SlogLogger;
 use argmin::core::Executor;
+use argmin::core::observers::ObserverMode;
 use argmin::solver::particleswarm::ParticleSwarm;
 use nalgebra::DVector;
 use proto::{FailedOptimization, SuccessfulOptimization, TaskPayload, TaskRunMetrics};
 use tracing::{info, warn};
-use crate::problem::sense::SenseProblem;
 
 pub enum SolverResult {
     Success(SuccessfulOptimization, TaskRunMetrics),
@@ -41,6 +41,7 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
 
     match Executor::new(SenseProblem::default(), solver)
         .configure(|state| state.max_iters(payload.max_iters as u64))
+        .add_observer(SlogLogger::term(), ObserverMode::Always)
         .run()
     {
         Ok(res) => {
@@ -84,8 +85,9 @@ pub fn run_optimization(payload: &TaskPayload) -> SolverResult {
 fn optimize_test() {
     let param = TaskPayload {
         swarm_scale: 100,
-        param_bounds_min: vec![-100f64, -100f64],
-        param_bounds_max: vec![100f64, 100f64],
+        // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
+        param_bounds_min: vec![30000f64, 0f64, 0f64, 0f64, 0f64, 0f64],
+        param_bounds_max: vec![50000f64, 0.2f64, 180f64, 360f64, 360f64, 360f64],
         max_iters: 100,
     };
     match run_optimization(&param) {

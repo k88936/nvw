@@ -22,3 +22,4 @@ nalgebra.workspace = true
 anyhow.workspace = true
 poliastrs.workspace = true
 itertools.workspace = true
+argmin-observer-slog.workspace = true
