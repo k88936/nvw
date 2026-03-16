@@ -1,4 +1,5 @@
 use crate::utils;
+use crate::utils::TIME_STEP;
 use anyhow::Error;
 use argmin::core::CostFunction;
 use itertools::Itertools;
@@ -46,6 +47,7 @@ impl CostFunction for SenseProblem {
             .collect();
 
         let sense_radius_km_square = self.sense_radius_km * self.sense_radius_km;
+        let default_lost_cost = 1024f64;
 
         let coverage_score: f64 = self
             .client_satellites_ephem
@@ -55,7 +57,7 @@ impl CostFunction for SenseProblem {
                 ephem.rv(None).0.into_iter().enumerate().map(|(i, pos)| {
                     // every time point
 
-                    let mut cost = 1024.0;
+                    let mut cost = default_lost_cost;
 
                     for dist_square in senser_ephem.iter().map(|sense_ephem| {
                         // dist collection
@@ -71,6 +73,7 @@ impl CostFunction for SenseProblem {
             })
             .sum();
 
-        Ok(coverage_score)
+        Ok(coverage_score
+            / (TIME_STEP as f64 * self.client_satellites_ephem.len() as f64 * default_lost_cost))
     }
 }
