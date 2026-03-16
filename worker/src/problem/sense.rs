@@ -1,7 +1,6 @@
-use crate::data::CLIENT_SATELLITES;
+use crate::utils;
 use anyhow::Error;
 use argmin::core::CostFunction;
-use chrono::{TimeZone, Utc};
 use itertools::Itertools;
 use nalgebra::DVector;
 use poliastrs::bodies::EARTH;
@@ -17,7 +16,7 @@ pub struct SenseProblem {
 impl Default for SenseProblem {
     fn default() -> Self {
         Self {
-            client_satellites_ephem: init_client_satellites_ephem(),
+            client_satellites_ephem: utils::init_client_satellites_ephem(),
             sense_radius_km: 1234.0,
         }
     }
@@ -42,7 +41,7 @@ impl CostFunction for SenseProblem {
                     nu_rad: orbit_params[5].to_radians(),
                 };
                 let orb = Orbit::from_classical(EARTH, coe);
-                Ephem::from_orbit(orb, gen_epochs(), Plane::EarthEquator)
+                Ephem::from_orbit(orb, utils::gen_epochs(), Plane::EarthEquator)
             })
             .collect();
 
@@ -56,16 +55,16 @@ impl CostFunction for SenseProblem {
                 ephem.rv(None).0.into_iter().enumerate().map(|(i, pos)| {
                     // every time point
 
-                    let mut cost = 128.0;
+                    let mut cost = 1024.0;
 
                     for dist_square in senser_ephem.iter().map(|sense_ephem| {
                         // dist collection
                         (sense_ephem.rv(None).0[i] - pos).magnitude_squared()
                     }) {
                         if dist_square < sense_radius_km_square {
-                            return 0f64
+                            return 0f64;
                         }
-                        cost = cost + (dist_square/sense_radius_km_square).ln();
+                        cost = cost + (dist_square / sense_radius_km_square).ln();
                     }
                     cost
                 })
@@ -75,30 +74,3 @@ impl CostFunction for SenseProblem {
         Ok(coverage_score)
     }
 }
-
-pub static TIME_STEP: usize = 128;
-fn init_client_satellites_ephem() -> Vec<Ephem> {
-    CLIENT_SATELLITES
-        .iter()
-        .map(|satellite| {
-            let orb = Orbit::from_vectors(EARTH, satellite.r_km, satellite.v_km_s);
-            Ephem::from_orbit(orb, gen_epochs(), Plane::EarthEquator)
-        })
-        .collect()
-}
-fn gen_epochs() -> Vec<f64> {
-    // Time handling: Convert 2026-01-01 to TDB seconds from J2000
-    // J2000 epoch is 2000-01-01 12:00:00 UTC
-    let j2000 = Utc.with_ymd_and_hms(2000, 1, 1, 12, 0, 0).unwrap();
-    let epoch_date = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
-    let epoch_tdb = (epoch_date - j2000).num_milliseconds() as f64 / 1000.0;
-
-    let duration = (60 * 60 * TIME_STEP) as f64;
-    let dt = duration / (TIME_STEP as f64 - 1.0);
-
-    let epochs: Vec<f64> = (0..TIME_STEP).map(|i| epoch_tdb + i as f64 * dt).collect();
-    epochs
-}
-
-#[test]
-fn test_orbit_plot() {}
