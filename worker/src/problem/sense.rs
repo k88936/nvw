@@ -18,7 +18,7 @@ impl Default for SenseProblem {
     fn default() -> Self {
         Self {
             client_satellites_ephem: init_client_satellites_ephem(),
-            sense_radius_km: 11234.0,
+            sense_radius_km: 1234.0,
         }
     }
 }
@@ -48,31 +48,35 @@ impl CostFunction for SenseProblem {
 
         let sense_radius_km_square = self.sense_radius_km * self.sense_radius_km;
 
-        let coverage_score: i32 = self
+        let coverage_score: f64 = self
             .client_satellites_ephem
             .iter()
             .flat_map(|ephem| {
-                ephem
-                    .rv(None)
-                    .0
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, pos)| {
-                        match senser_ephem.iter().any(|sense_ephem| {
-                            (sense_ephem.rv(None).0[i] - pos).magnitude_squared() < sense_radius_km_square
-                        }) {
-                            true => 0,
-                            false => 1,
+                // every client
+                ephem.rv(None).0.into_iter().enumerate().map(|(i, pos)| {
+                    // every time point
+
+                    let mut cost = 128.0;
+
+                    for dist_square in senser_ephem.iter().map(|sense_ephem| {
+                        // dist collection
+                        (sense_ephem.rv(None).0[i] - pos).magnitude_squared()
+                    }) {
+                        if dist_square < sense_radius_km_square {
+                            return 0f64
                         }
-                    })
+                        cost = cost + (dist_square/sense_radius_km_square).ln();
+                    }
+                    cost
+                })
             })
             .sum();
 
-        Ok(coverage_score as f64 / (TIME_STEP * self.client_satellites_ephem.len()) as f64)
+        Ok(coverage_score)
     }
 }
 
-pub static TIME_STEP: usize = 84;
+pub static TIME_STEP: usize = 128;
 fn init_client_satellites_ephem() -> Vec<Ephem> {
     CLIENT_SATELLITES
         .iter()
@@ -89,9 +93,12 @@ fn gen_epochs() -> Vec<f64> {
     let epoch_date = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
     let epoch_tdb = (epoch_date - j2000).num_milliseconds() as f64 / 1000.0;
 
-    let duration = (60 * 60 * 2 * TIME_STEP) as f64;
+    let duration = (60 * 60 * TIME_STEP) as f64;
     let dt = duration / (TIME_STEP as f64 - 1.0);
 
     let epochs: Vec<f64> = (0..TIME_STEP).map(|i| epoch_tdb + i as f64 * dt).collect();
     epochs
 }
+
+#[test]
+fn test_orbit_plot() {}

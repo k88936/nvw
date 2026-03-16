@@ -57,8 +57,8 @@ pub struct TaskRunMetrics {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SuccessfulOptimization {
-    pub best_cost: f32,
-    pub best_param: Vec<f32>,
+    pub best_cost: f64,
+    pub best_param: Vec<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
