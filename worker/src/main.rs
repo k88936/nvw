@@ -149,9 +149,9 @@ fn main() {
     // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
     let single_bounds_min = vec![20000f64, 0f64, 0f64, 0f64, 0f64, 0f64];
     let single_bounds_max = vec![45000f64, 0.1f64, 180f64, 360f64, 360f64, 360f64];
-    let satellite_num = 4;
-    let swarm_scale = 128;
-    let max_iters = 128;
+    let satellite_num = 10;
+    let swarm_scale = 256;
+    let max_iters = 256;
     // let param = TaskPayload {
     //     swarm_scale: 128,
     //     param_bounds_min: single_bounds_min,
@@ -182,7 +182,6 @@ fn main() {
             .unwrap();
         let cost = state.best_individual.as_ref().map(|p| p.cost).unwrap();
         println!("opt result: {:?} {:?}", cost, best);
-
         cached_vars = best;
     }
 }

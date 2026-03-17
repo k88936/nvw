@@ -77,31 +77,20 @@ impl CostFunction for SenseProblem {
         let sense_radius_km_square = self.sense_radius_km * self.sense_radius_km;
         let default_lost_cost = 1024f64;
 
-        let coverage_score: f64 = self
+        let coverage_score: usize= self
             .check_points
             .iter()
             // every client
             .map(|(i, pos)| {
-                // every time point
-                let mut cost = default_lost_cost;
-
-                // dist collection
-                for dist_square in senser_ephem
-                    .iter()
-                    .map(|sense_ephem| (sense_ephem.rv(None).0[*i] - pos).magnitude_squared())
-                {
-                    if dist_square < sense_radius_km_square {
-                        return 0f64;
-                    }
-                    cost = cost + (dist_square / sense_radius_km_square).ln();
+                match senser_ephem.iter().any(|sense_ephem| {
+                    (sense_ephem.rv(None).0[*i] - pos).magnitude_squared() < sense_radius_km_square
+                }) {
+                    true => 0,
+                    false => 1,
                 }
-                cost
             })
             .sum();
 
-        Ok(
-            coverage_score
-                / (self.check_points.len() as f64 * default_lost_cost),
-        )
+        Ok(coverage_score as f64)
     }
 }
