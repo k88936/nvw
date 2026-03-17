@@ -8,7 +8,7 @@ use crate::data::CLIENT_SATELLITES;
 pub static TIME_STEP: usize = 128;
 
 pub fn init_client_satellites_ephem() -> Vec<Ephem> {
-    CLIENT_SATELLITES[0..5]
+    CLIENT_SATELLITES
         .iter()
         .map(|satellite| {
             let orb = Orbit::from_vectors(EARTH, satellite.r_km, satellite.v_km_s);

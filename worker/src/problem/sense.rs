@@ -49,29 +49,28 @@ impl CostFunction for SenseProblem {
         let sense_radius_km_square = self.sense_radius_km * self.sense_radius_km;
         let default_lost_cost = 1024f64;
 
-        let coverage_score: f64 = self
-            .client_satellites_ephem
-            .iter()
-            .flat_map(|ephem| {
+        let coverage_score: f64 =
+            self.client_satellites_ephem
+                .iter()
                 // every client
-                ephem.rv(None).0.into_iter().enumerate().map(|(i, pos)| {
+                .flat_map(|ephem| {
                     // every time point
+                    ephem.rv(None).0.into_iter().enumerate().map(|(i, pos)| {
+                        let mut cost = default_lost_cost;
 
-                    let mut cost = default_lost_cost;
-
-                    for dist_square in senser_ephem.iter().map(|sense_ephem| {
                         // dist collection
-                        (sense_ephem.rv(None).0[i] - pos).magnitude_squared()
-                    }) {
-                        if dist_square < sense_radius_km_square {
-                            return 0f64;
+                        for dist_square in senser_ephem.iter().map(|sense_ephem| {
+                            (sense_ephem.rv(None).0[i] - pos).magnitude_squared()
+                        }) {
+                            if dist_square < sense_radius_km_square {
+                                return 0f64;
+                            }
+                            cost = cost + (dist_square / sense_radius_km_square).ln();
                         }
-                        cost = cost + (dist_square / sense_radius_km_square).ln();
-                    }
-                    cost
+                        cost
+                    })
                 })
-            })
-            .sum();
+                .sum();
 
         Ok(coverage_score
             / (TIME_STEP as f64 * self.client_satellites_ephem.len() as f64 * default_lost_cost))

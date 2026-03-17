@@ -8,6 +8,7 @@ argmin.workspace = true
 argmin-math.workspace = true
 argmin_testfunctions.workspace = true
 rand.workspace = true
+rand_xoshiro.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
