@@ -230,7 +230,7 @@ fn main() {
 
         if let Some(best) = candidates.first() {
             println!("Best cost at iteration {}: {}", i + 1, best.cost);
-            if best.cost < 5.0 {
+            if best.cost < init_cost*0.05 {
                 println!("Target cost reached!");
                 break;
             }
