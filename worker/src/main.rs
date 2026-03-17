@@ -149,7 +149,7 @@ fn main() {
     // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
     let single_bounds_min = vec![20000f64, 0f64, 0f64, 0f64, 0f64, 0f64];
     let single_bounds_max = vec![45000f64, 0.1f64, 180f64, 360f64, 360f64, 360f64];
-    let max_num = 10;
+    let max_num = 64;
     let swarm_scale = 512;
     let max_iters = 512;
     // let param = TaskPayload {
@@ -195,7 +195,7 @@ fn main() {
                 let solver = ParticleSwarm::new((lower.clone(), upper.clone()), swarm_scale);
                 let result = Executor::new(candidate.problem.clone(), solver)
                     .configure(|state| state.max_iters(max_iters as u64))
-                    // .add_observer(SlogLogger::term(), ObserverMode::Always) // Reduce logging noise
+                    .add_observer(SlogLogger::term(), ObserverMode::Always)
                     .run()
                     .expect("optimize failed");
 
