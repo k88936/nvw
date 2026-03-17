@@ -169,21 +169,24 @@ fn main() {
         cost: f64,
     }
 
+    let init = SenseProblem::default();
+    let init_cost = init.get_scale();
     let mut candidates = vec![BeamNode {
-        problem: SenseProblem::default(),
+        problem: init,
         params: vec![],
-        cost: f64::INFINITY, // Initial cost is unknown but effectively large
+        cost: init_cost,
     }];
-    
-    // Initial cost is unknown but effectively large
-    candidates[0].cost = f64::INFINITY;
 
     let beam_width = 3;
 
     for i in 0..max_num {
         let mut next_candidates = Vec::new();
 
-        println!("Iteration {}: Expanding {} candidates", i + 1, candidates.len());
+        println!(
+            "Iteration {}: Expanding {} candidates",
+            i + 1,
+            candidates.len()
+        );
 
         for candidate in &candidates {
             // Branch factor: run PSO multiple times to find diverse next steps
@@ -195,12 +198,17 @@ fn main() {
                     // .add_observer(SlogLogger::term(), ObserverMode::Always) // Reduce logging noise
                     .run()
                     .expect("optimize failed");
-                
+
                 let state = result.state();
-                let best_param = state.best_individual.as_ref().map(|p| p.position.clone()).unwrap();
+                let best_param = state
+                    .best_individual
+                    .as_ref()
+                    .map(|p| p.position.clone())
+                    .unwrap();
                 let cost = state.best_individual.as_ref().map(|p| p.cost).unwrap();
 
-                let next_problem = SenseProblem::from_previous(candidate.problem.clone(), best_param.clone());
+                let next_problem =
+                    SenseProblem::from_previous(candidate.problem.clone(), best_param.clone());
                 let mut next_params = candidate.params.clone();
                 next_params.push(best_param);
 
@@ -213,7 +221,11 @@ fn main() {
         }
 
         // Sort by cost (ascending) and keep top K
-        next_candidates.sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap_or(std::cmp::Ordering::Equal));
+        next_candidates.sort_by(|a, b| {
+            a.cost
+                .partial_cmp(&b.cost)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         candidates = next_candidates.into_iter().take(beam_width).collect();
 
         if let Some(best) = candidates.first() {
@@ -231,4 +243,3 @@ fn main() {
         println!("Parameters: {:?}", best.params);
     }
 }
-

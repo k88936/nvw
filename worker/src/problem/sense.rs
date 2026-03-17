@@ -12,9 +12,10 @@ use poliastrs::twobody::orbit::Orbit;
 
 #[derive(Clone)]
 pub struct SenseProblem {
-    check_points: Vec<(usize, Vector3<f64>)>,
-    sense_radius_km: f64,
+    pub check_points: Vec<(usize, Vector3<f64>)>,
+    pub sense_radius_km: f64,
 }
+
 impl SenseProblem {
     pub fn from_previous(problem: SenseProblem, staged_vars: DVector<f64>) -> Self {
         let senser_ephem = Self::collect_senser_ephems(&staged_vars);
@@ -32,6 +33,9 @@ impl SenseProblem {
                 .collect(),
             sense_radius_km: problem.sense_radius_km,
         }
+    }
+    pub fn get_scale(&self) -> f64 {
+        self.check_points.len() as f64
     }
 
     fn collect_senser_ephems(param: &DVector<f64>) -> Vec<Ephem> {
