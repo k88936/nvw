@@ -149,9 +149,9 @@ fn main() {
     // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
     let single_bounds_min = vec![20000f64, 0f64, 0f64, 0f64, 0f64, 0f64];
     let single_bounds_max = vec![45000f64, 0.1f64, 180f64, 360f64, 360f64, 360f64];
-    let satellite_num = 10;
-    let swarm_scale = 256;
-    let max_iters = 256;
+    let max_num = 10;
+    let swarm_scale = 512;
+    let max_iters = 512;
     // let param = TaskPayload {
     //     swarm_scale: 128,
     //     param_bounds_min: single_bounds_min,
@@ -159,29 +159,76 @@ fn main() {
     //     max_iters: 128,
     // };
 
-    let mut problem = SenseProblem::default();
-    let mut cached_vars: DVector<f64> = DVector::from_vec(vec![]);
+    let lower = DVector::from_vec(single_bounds_min.clone());
+    let upper = DVector::from_vec(single_bounds_max.clone());
 
-    for _ in 0..satellite_num {
-        let lower = DVector::from_vec(single_bounds_min.clone());
-        let upper = DVector::from_vec(single_bounds_max.clone());
+    #[derive(Clone)]
+    struct BeamNode {
+        problem: SenseProblem,
+        params: Vec<DVector<f64>>,
+        cost: f64,
+    }
 
-        problem = SenseProblem::from_previous(problem.clone(), cached_vars.clone());
+    let mut candidates = vec![BeamNode {
+        problem: SenseProblem::default(),
+        params: vec![],
+        cost: f64::INFINITY, // Initial cost is unknown but effectively large
+    }];
+    
+    // Initial cost is unknown but effectively large
+    candidates[0].cost = f64::INFINITY;
 
-        let solver = ParticleSwarm::new((lower, upper), swarm_scale);
-        let result = Executor::new(problem.clone(), solver)
-            .configure(|state| state.max_iters(max_iters as u64))
-            .add_observer(SlogLogger::term(), ObserverMode::Always)
-            .run()
-            .expect("optimize failed");
-        let state = result.state();
-        let best = state
-            .best_individual
-            .as_ref()
-            .map(|p| p.position.clone())
-            .unwrap();
-        let cost = state.best_individual.as_ref().map(|p| p.cost).unwrap();
-        println!("opt result: {:?} {:?}", cost, best);
-        cached_vars = best;
+    let beam_width = 3;
+
+    for i in 0..max_num {
+        let mut next_candidates = Vec::new();
+
+        println!("Iteration {}: Expanding {} candidates", i + 1, candidates.len());
+
+        for candidate in &candidates {
+            // Branch factor: run PSO multiple times to find diverse next steps
+            // Since PSO is stochastic, running it multiple times gives different results
+            for _ in 0..beam_width {
+                let solver = ParticleSwarm::new((lower.clone(), upper.clone()), swarm_scale);
+                let result = Executor::new(candidate.problem.clone(), solver)
+                    .configure(|state| state.max_iters(max_iters as u64))
+                    // .add_observer(SlogLogger::term(), ObserverMode::Always) // Reduce logging noise
+                    .run()
+                    .expect("optimize failed");
+                
+                let state = result.state();
+                let best_param = state.best_individual.as_ref().map(|p| p.position.clone()).unwrap();
+                let cost = state.best_individual.as_ref().map(|p| p.cost).unwrap();
+
+                let next_problem = SenseProblem::from_previous(candidate.problem.clone(), best_param.clone());
+                let mut next_params = candidate.params.clone();
+                next_params.push(best_param);
+
+                next_candidates.push(BeamNode {
+                    problem: next_problem,
+                    params: next_params,
+                    cost,
+                });
+            }
+        }
+
+        // Sort by cost (ascending) and keep top K
+        next_candidates.sort_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap_or(std::cmp::Ordering::Equal));
+        candidates = next_candidates.into_iter().take(beam_width).collect();
+
+        if let Some(best) = candidates.first() {
+            println!("Best cost at iteration {}: {}", i + 1, best.cost);
+            if best.cost < 5.0 {
+                println!("Target cost reached!");
+                break;
+            }
+        }
+    }
+
+    // Output final result
+    if let Some(best) = candidates.first() {
+        println!("Final best solution found with cost: {}", best.cost);
+        println!("Parameters: {:?}", best.params);
     }
 }
+
