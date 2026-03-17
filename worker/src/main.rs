@@ -150,8 +150,8 @@ fn main() {
     let single_bounds_min = vec![20000f64, 0f64, 0f64, 0f64, 0f64, 0f64];
     let single_bounds_max = vec![45000f64, 0.1f64, 180f64, 360f64, 360f64, 360f64];
     let max_num = 64;
-    let swarm_scale = 512;
-    let max_iters = 512;
+    let swarm_scale = 256;
+    let max_iters = 256;
     // let param = TaskPayload {
     //     swarm_scale: 128,
     //     param_bounds_min: single_bounds_min,

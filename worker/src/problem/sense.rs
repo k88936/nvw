@@ -66,7 +66,7 @@ impl Default for SenseProblem {
                 .iter()
                 .flat_map(|ephem| ephem.rv(None).0.into_iter().enumerate())
                 .collect(),
-            sense_radius_km: 1234.0,
+            sense_radius_km: 5000.0,
         }
     }
 }
