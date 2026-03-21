@@ -134,7 +134,7 @@ fn main() {
     // 0: a_km 6300-oo 1: e 0-1 2:inc_degree 0-180 3:raan_degree 0-360 4: argp_degree 0-360 5: nu_degree 0-360
     let single_bounds_min = vec![20000f64, 0f64, 0f64, 0f64, 0f64, 0f64];
     let single_bounds_max = vec![45000f64, 0.1f64, 180f64, 360f64, 360f64, 360f64];
-    let max_num = 64;
+    let max_num = 16;
     let swarm_scale = 256;
     let max_iters = 256;
 
@@ -148,7 +148,7 @@ fn main() {
         max_iters: max_iters as u64,
         bounds_min: single_bounds_min,
         bounds_max: single_bounds_max,
-        target_cost: init_cost * 0.05,
+        target_cost: 0f64,
     };
 
     match beam_pso(init, config) {
