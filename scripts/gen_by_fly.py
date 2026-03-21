@@ -2,7 +2,6 @@ import numpy as np
 from astropy import units as u
 from poliastro.bodies import Earth
 from poliastro.twobody import Orbit
-from poliastro.util import norm
 
 
 def lvlh_to_inertial(r_t, v_t, rho, drho):
@@ -14,6 +13,9 @@ def lvlh_to_inertial(r_t, v_t, rho, drho):
     返回:
         r_s, v_s : 服务卫星在惯性系中的位置速度矢量
     """
+    # Use numpy norm since inputs are values
+    norm = np.linalg.norm
+
     # 构建 LVLH 坐标系基向量
     x_hat = r_t / norm(r_t)
     z_hat = np.cross(r_t, v_t) / norm(np.cross(r_t, v_t))
@@ -239,13 +241,7 @@ def generate_sameorbit_candidates(target_orbit, delta_M_deg_list):
     return candidates
 
 
-# ==================== 主程序 ====================
-def gen_by_fly_orbit():
-    # 示例目标轨道：LEO 近圆轨道（半长轴 7000 km，偏心率 0.001，倾角 50°）
-    target_orbit = Orbit.from_vectors(
-        # TODO
-    )
-
+def generate_all_candidates(target_orbit):
     # 定义各类型候选的参数离散集（可根据需要调整）
     # 椭圆型：短半轴 (km) 和相位角 (deg)
     b_vals = [0.5, 1, 2, 5]
@@ -260,7 +256,6 @@ def gen_by_fly_orbit():
     # 共轨型：相位差 (deg)
     delta_m_vals = [0.1, 0.5, 1, 2, 5]
 
-    # 生成候选列表
     candidates = []
     candidates.extend(generate_ellipse_candidates(target_orbit, b_vals, phi_vals))
     candidates.extend(generate_oscillation_candidates(target_orbit, dz_vals))

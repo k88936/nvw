@@ -1,5 +1,5 @@
 use crate::utils;
-use crate::utils::{TIME_STEP, init_client_satellites_ephem};
+use crate::utils::init_client_satellites_ephem;
 use anyhow::Error;
 use argmin::core::CostFunction;
 use itertools::Itertools;
@@ -17,27 +17,6 @@ pub struct SenseProblem {
 }
 
 impl SenseProblem {
-    pub fn from_previous(problem: SenseProblem, staged_vars: DVector<f64>) -> Self {
-        let senser_ephem = Self::collect_senser_ephems(&staged_vars);
-        let sense_radius_km_square = problem.sense_radius_km * problem.sense_radius_km;
-        Self {
-            check_points: problem
-                .check_points
-                .into_iter()
-                .filter(|(i, pos)| {
-                    !senser_ephem.iter().any(|sense_ephem| {
-                        (sense_ephem.rv(None).0[*i] - pos).magnitude_squared()
-                            < sense_radius_km_square
-                    })
-                })
-                .collect(),
-            sense_radius_km: problem.sense_radius_km,
-        }
-    }
-    pub fn get_scale(&self) -> f64 {
-        self.check_points.len() as f64
-    }
-
     fn collect_senser_ephems(param: &DVector<f64>) -> Vec<Ephem> {
         let sensor_params = param.iter().chunks(6);
         let senser_ephem: Vec<_> = sensor_params
@@ -59,6 +38,35 @@ impl SenseProblem {
         senser_ephem
     }
 }
+
+impl SubProblem<SenseProblem> for SenseProblem {
+    fn from_previous(problem: SenseProblem, staged_vars: DVector<f64>) -> Self {
+        let senser_ephem = Self::collect_senser_ephems(&staged_vars);
+        let sense_radius_km_square = problem.sense_radius_km * problem.sense_radius_km;
+        Self {
+            check_points: problem
+                .check_points
+                .into_iter()
+                .filter(|(i, pos)| {
+                    !senser_ephem.iter().any(|sense_ephem| {
+                        (sense_ephem.rv(None).0[*i] - pos).magnitude_squared()
+                            < sense_radius_km_square
+                    })
+                })
+                .collect(),
+            sense_radius_km: problem.sense_radius_km,
+        }
+    }
+    fn get_scale(&self) -> f64 {
+        self.check_points.len() as f64
+    }
+}
+
+pub trait SubProblem<T> {
+    fn from_previous(previous: T, sub_solved: DVector<f64>) -> Self;
+    fn get_scale(&self) -> f64;
+}
+
 impl Default for SenseProblem {
     fn default() -> Self {
         Self {
@@ -79,12 +87,9 @@ impl CostFunction for SenseProblem {
         let senser_ephem = Self::collect_senser_ephems(param);
 
         let sense_radius_km_square = self.sense_radius_km * self.sense_radius_km;
-        let default_lost_cost = 1024f64;
-
-        let coverage_score: usize= self
+        let coverage_score: usize = self
             .check_points
             .iter()
-            // every client
             .map(|(i, pos)| {
                 match senser_ephem.iter().any(|sense_ephem| {
                     (sense_ephem.rv(None).0[*i] - pos).magnitude_squared() < sense_radius_km_square
