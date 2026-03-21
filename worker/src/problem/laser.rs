@@ -18,13 +18,10 @@ fn alpha_d_m(_d: f64) -> f64 {
     0.5
 }
 //TODO
-fn mu_d_m(_d: f64) -> f64 {
-    0.5
-}
+const MU_H_KM: f64 = 30000f64;
+
 //TODO
-fn sigma_d_m(_d: f64) -> f64 {
-    0.5
-}
+const SIGMA_H_KM: f64 = 1000f64;
 
 //TODO
 fn danger_d_m(_d: f64) -> f64 {
@@ -84,7 +81,7 @@ const D_VALS_STEP: f64 = 10f64;
 const D_VALS_LEN: usize = 10;
 const H_VALS_INIT: f64 = 25000f64;
 const H_VALS_STEP: f64 = 500f64;
-const H_VALS_LEN: usize = 10;
+const H_VALS_LEN: usize = 1500;
 
 //TODO
 const CLIENT_SIZE: f64 = 1f64;
@@ -97,10 +94,10 @@ fn orbital_velocity(altitude_km: f64) -> f64 {
 }
 impl Default for DebrisCleanProblem {
     fn default() -> Self {
-        let d_vals: Vec<_> = (0..10)
+        let d_vals: Vec<_> = (0..D_VALS_LEN)
             .map(|i| i as f64 * D_VALS_STEP + D_VALS_INIT)
             .collect();
-        let h_vals: Vec<_> = (0..10)
+        let h_vals: Vec<_> = (0..H_VALS_LEN)
             .map(|i| i as f64 * H_VALS_STEP + H_VALS_INIT)
             .collect();
 
@@ -113,7 +110,7 @@ impl Default for DebrisCleanProblem {
         for h in &h_vals {
             for d in d_vals.clone() {
                 let val =
-                    alpha_d_m(d) * (-(h - mu_d_m(d)).powi(2) / (2.0 * sigma_d_m(d).powi(2))).exp();
+                    alpha_d_m(d) * (-(h - MU_H_KM).powi(2) / (2.0 * SIGMA_H_KM.powi(2))).exp();
                 d_field.push(val);
             }
         }
@@ -172,7 +169,7 @@ impl CostFunction for DebrisCleanProblem {
                 })
             })
         });
-        Ok(d_field_reduced.dot(&self.eval_bucket))
+        Ok(-d_field_reduced.dot(&self.eval_bucket))
     }
 }
 
@@ -214,6 +211,6 @@ impl SubProblem<Self> for DebrisCleanProblem {
     }
 
     fn get_score(&self) -> f64 {
-        self.debris_field.dot(&self.eval_bucket)
+        -self.debris_field.dot(&self.eval_bucket)
     }
 }
