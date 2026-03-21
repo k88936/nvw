@@ -124,7 +124,7 @@ impl Default for DebrisCleanProblem {
             for i in 0..client.epochs.len() {
                 let hi = rhtohi(client.coordinates[i].magnitude());
                 let v = client.velocities.as_ref().unwrap()[i];
-                let v = v.magnitude() - v_vals[hi];
+                let v = (v.magnitude() - v_vals[hi]).abs();
                 let factor = v * CLIENT_SIZE;
                 for (di, d) in d_vals.iter().enumerate() {
                     let i = dihitoi(di, hi);
