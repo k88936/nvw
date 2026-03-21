@@ -1,11 +1,12 @@
-use poliastrs::ephem::Ephem;
-use poliastrs::twobody::orbit::Orbit;
-use poliastrs::bodies::EARTH;
-use poliastrs::frames::Plane;
-use chrono::{TimeZone, Utc};
 use crate::data::CLIENT_SATELLITES;
+use chrono::{TimeZone, Utc};
+use poliastrs::bodies::EARTH;
+use poliastrs::ephem::Ephem;
+use poliastrs::frames::Plane;
+use poliastrs::twobody::orbit::Orbit;
 
-pub static TIME_STEP: usize = 128;
+pub const TIME_PIECE_SECONDS: usize = 60 * 60;
+pub const TIME_STEP: usize = 128;
 
 pub fn init_client_satellites_ephem() -> Vec<Ephem> {
     CLIENT_SATELLITES
@@ -24,7 +25,7 @@ pub fn gen_epochs() -> Vec<f64> {
     let epoch_date = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
     let epoch_tdb = (epoch_date - j2000).num_milliseconds() as f64 / 1000.0;
 
-    let duration = (60 * 60 * TIME_STEP) as f64;
+    let duration = (TIME_PIECE_SECONDS * TIME_STEP) as f64;
     let dt = duration / (TIME_STEP as f64 - 1.0);
 
     let epochs: Vec<f64> = (0..TIME_STEP).map(|i| epoch_tdb + i as f64 * dt).collect();

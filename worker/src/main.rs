@@ -3,7 +3,9 @@ mod optimize;
 pub mod problem;
 pub mod solver;
 pub mod utils;
-use crate::problem::sense::{SenseProblem, SubProblem};
+
+use crate::problem::laser::DebrisCleanProblem;
+use crate::problem::sense::SubProblem;
 use crate::solver::{beam_pso, BeamSearchConfig};
 
 // #[tokio::main]
@@ -136,7 +138,7 @@ fn main() {
     let swarm_scale = 256;
     let max_iters = 256;
 
-    let init = SenseProblem::default();
+    let init = DebrisCleanProblem::default();
     let init_cost = init.get_score();
 
     let config = BeamSearchConfig {
