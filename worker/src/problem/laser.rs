@@ -169,7 +169,7 @@ impl CostFunction for DebrisCleanProblem {
                 })
             })
         });
-        Ok(-d_field_reduced.dot(&self.eval_bucket))
+        Ok(d_field_reduced.dot(&self.eval_bucket))
     }
 }
 
@@ -211,6 +211,6 @@ impl SubProblem<Self> for DebrisCleanProblem {
     }
 
     fn get_score(&self) -> f64 {
-        -self.debris_field.dot(&self.eval_bucket)
+        self.debris_field.dot(&self.eval_bucket)
     }
 }
