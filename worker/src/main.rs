@@ -1,27 +1,13 @@
 pub mod data;
 mod optimize;
 pub mod problem;
-pub mod solver;
 pub mod utils;
-
-use std::{env, iter, time::Duration};
-
-use crate::data::CLIENT_SATELLITES;
 use crate::problem::sense::SenseProblem;
-use anyhow::Result;
-use argmin::core::Executor;
 use argmin::core::observers::ObserverMode;
+use argmin::core::Executor;
 use argmin::solver::particleswarm::ParticleSwarm;
 use argmin_observer_slog::SlogLogger;
-use chrono::Utc;
-use nalgebra::{DVector, OMatrix};
-use poliastrs::bodies::EARTH;
-use poliastrs::core::elements::ClassicalElements;
-use poliastrs::plotting::orbit_plotter::OrbitPlotter;
-use poliastrs::twobody::orbit::Orbit;
-use proto::{ClaimTaskRequest, ClaimTaskResponse, SubmitTaskResultRequest, TaskPayload, Version};
-use tracing::{error, info, warn};
-use uuid::Uuid;
+use nalgebra::DVector;
 
 // #[tokio::main]
 // async fn main() -> Result<()> {
@@ -230,7 +216,7 @@ fn main() {
 
         if let Some(best) = candidates.first() {
             println!("Best cost at iteration {}: {}", i + 1, best.cost);
-            if best.cost < init_cost*0.05 {
+            if best.cost < init_cost * 0.05 {
                 println!("Target cost reached!");
                 break;
             }
