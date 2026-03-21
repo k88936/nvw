@@ -57,14 +57,14 @@ impl SubProblem<SenseProblem> for SenseProblem {
             sense_radius_km: problem.sense_radius_km,
         }
     }
-    fn get_scale(&self) -> f64 {
+    fn get_score(&self) -> f64 {
         self.check_points.len() as f64
     }
 }
 
 pub trait SubProblem<T> {
     fn from_previous(previous: T, sub_solved: DVector<f64>) -> Self;
-    fn get_scale(&self) -> f64;
+    fn get_score(&self) -> f64;
 }
 
 impl Default for SenseProblem {

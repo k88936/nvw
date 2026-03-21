@@ -41,7 +41,7 @@ where
 {
     let lower = DVector::from_vec(config.bounds_min.clone());
     let upper = DVector::from_vec(config.bounds_max.clone());
-    let init_cost = initial_problem.get_scale();
+    let init_cost = initial_problem.get_score();
 
     let mut candidates = vec![BeamNode {
         problem: initial_problem,

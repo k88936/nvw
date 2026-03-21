@@ -137,7 +137,7 @@ fn main() {
     let max_iters = 256;
 
     let init = SenseProblem::default();
-    let init_cost = init.get_scale();
+    let init_cost = init.get_score();
 
     let config = BeamSearchConfig {
         beam_width: 3,
